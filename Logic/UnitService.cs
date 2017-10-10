@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Logic
 {
@@ -24,16 +25,17 @@ namespace Logic
             foreach (var unit in _units)
             {
                 IsNotParentFotItself(unit);
-                List<Unit> childUnits = new List<Unit>();
+
+                List<Unit> firstNestingChilds = new List<Unit>();
                 foreach (var child in _units)
                 {
                     if (unit.Id == child.ParentUnitId)
                     {
                         IsNotRecursion(unit, child);
-                        childUnits.Add(child);
+                        firstNestingChilds.Add(child);
                     }
                 }
-                _result.Add(unit.Id, childUnits);
+                _result.Add(unit.Id, firstNestingChilds);
             }
         }
 
@@ -41,19 +43,18 @@ namespace Logic
         {
             foreach (var unit in _result)
             {
-                if (unit.Value.Count != 0)
+                if (unit.Value.Count == 0) continue;
+
+                List<Unit> secondNestingChilds = new List<Unit>();
+                foreach (var firstNestingChild in unit.Value)
                 {
-                    List<Unit> secondNestingChilds = new List<Unit>();
-                    foreach (var oneChild in unit.Value)
+                    foreach (var secondNestingChild in _result[firstNestingChild.Id])
                     {
-                        foreach (var secondNestingChild in _result[oneChild.Id])
-                        {
-                            IsNotRecursion(unit.Key, secondNestingChild);
-                            secondNestingChilds.Add(secondNestingChild);
-                        }
+                        IsNotRecursion(_units.Find(u => u.Id == unit.Key), secondNestingChild);
+                        secondNestingChilds.Add(secondNestingChild);
                     }
-                    unit.Value.AddRange(secondNestingChilds);
                 }
+                unit.Value.AddRange(secondNestingChilds);
             }
         }
 
@@ -62,7 +63,7 @@ namespace Logic
         {
             if (unit.ParentUnitId == unit.Id)
             {
-                throw new Exception("Unit cannot be parent of itself.");
+                throw new Exception($"Unit {unit.Name} cannot be parent of itself.");
             }
         }
 
@@ -70,13 +71,8 @@ namespace Logic
         {
             if (unit.ParentUnitId == child.Id)
             {
-                throw new Exception("Recursion isn't appropriate.");
+                throw new Exception($"Cycle dependency in units {unit.Name} and {child.Name}.");
             }
-        }
-
-        private static void IsNotRecursion(int unitId, Unit child)
-        {
-            IsNotRecursion(_units.Find(u => u.Id == unitId), child);
         }
         #endregion
     }
