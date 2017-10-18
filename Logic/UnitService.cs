@@ -15,7 +15,8 @@ namespace Logic
             {
                 IsNotParentForItself(unit);
                 ParentExists(unit, units);
-
+                IsKeyUnique(unit.Id, result);
+                
                 result.Add(unit.Id, FindChildren(unit, unit, units));
             }
 
@@ -39,6 +40,14 @@ namespace Logic
             }
 
             return children;
+        }
+
+        private static void IsKeyUnique(int key, Dictionary<int, List<Unit>> dictionary)
+        {
+            if (dictionary.ContainsKey(key))
+            {
+                throw new Exception($"Unit with this id = {key} already exists.");
+            }
         }
 
         private static void IsNotParentForItself(Unit unit)
