@@ -6,60 +6,42 @@ namespace Logic
 {
     public static class UnitService
     {
-        private static List<Unit> _units;
-        private static Dictionary<int, List<Unit>> _result;
-
         public static Dictionary<int, List<Unit>> ToDictionnary(List<Unit> units)
         {
-            _units = units;
-            _result = new Dictionary<int, List<Unit>>();
+            Dictionary<int, List<Unit>> result = new Dictionary<int, List<Unit>>();
+            units.OrderBy(u => u.Id);
 
-            FindChildsOfFirstNesting();
-            FindChildsOfSecondNesting();
-
-            return _result;
-        }
-
-        private static void FindChildsOfFirstNesting()
-        {
-            foreach (var unit in _units)
+            foreach (var unit in units)
             {
-                IsNotParentFotItself(unit);
+                IsNotParentForItself(unit);
+                ParentExists(unit, units);
 
-                List<Unit> firstNestingChilds = new List<Unit>();
-                foreach (var child in _units)
-                {
-                    if (unit.Id == child.ParentUnitId)
-                    {
-                        IsNotRecursion(unit, child);
-                        firstNestingChilds.Add(child);
-                    }
-                }
-                _result.Add(unit.Id, firstNestingChilds);
+                result.Add(unit.Id, FindChildren(unit, unit, units));
             }
+
+            return result;
         }
 
-        private static void FindChildsOfSecondNesting()
+        private static List<Unit> FindChildren(Unit mainUnit, Unit unit, List<Unit> units)
         {
-            foreach (var unit in _result)
-            {
-                if (unit.Value.Count == 0) continue;
+            List<Unit> children = new List<Unit>();
 
-                List<Unit> secondNestingChilds = new List<Unit>();
-                foreach (var firstNestingChild in unit.Value)
+            foreach (var child in units)
+            {
+                if (child.ParentUnitId == unit.Id)
                 {
-                    foreach (var secondNestingChild in _result[firstNestingChild.Id])
-                    {
-                        IsNotRecursion(_units.Find(u => u.Id == unit.Key), secondNestingChild);
-                        secondNestingChilds.Add(secondNestingChild);
-                    }
+                    IsNotRecursion(unit, child);
+                    IsNotRecursion(mainUnit, child);
+
+                    children.Add(child);
+                    children.AddRange(FindChildren(mainUnit, child, units));
                 }
-                unit.Value.AddRange(secondNestingChilds);
             }
+
+            return children;
         }
 
-        #region validation
-        private static void IsNotParentFotItself(Unit unit)
+        private static void IsNotParentForItself(Unit unit)
         {
             if (unit.ParentUnitId == unit.Id)
             {
@@ -74,6 +56,45 @@ namespace Logic
                 throw new Exception($"Cycle dependency in units {unit.Name} and {child.Name}.");
             }
         }
-        #endregion
+
+        private static void ParentExists(Unit unit, List<Unit> units)
+        {
+            if (unit.ParentUnitId == null)
+            {
+                return;
+            }
+            
+            if (BinarySearchById(units.ToArray(), unit) == -1)
+            {
+                throw new Exception($"Parent does not exists in unit {unit.Name}.");
+            }
+        }
+
+        private static int BinarySearchById(Unit[] array, Unit element)
+        {
+            int left = 0;
+            int right = array.Length - 1;
+            int middle = 0;
+
+            while (left <= right)
+            {
+                middle = (left + right) / 2;
+
+                if (element.Id < array[middle].Id)
+                {
+                    right = middle;
+                }
+                else if (element.Id > array[middle].Id)
+                {
+                    left = middle + 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return (array[middle].Id == element.Id) ? middle : -1;
+        }
     }
 }
