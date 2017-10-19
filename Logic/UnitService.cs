@@ -9,7 +9,7 @@ namespace Logic
         public static Dictionary<int, List<Unit>> ToDictionnary(List<Unit> units)
         {
             Dictionary<int, List<Unit>> result = new Dictionary<int, List<Unit>>();
-            units.OrderBy(u => u.Id);
+            
 
             foreach (var unit in units)
             {
@@ -27,7 +27,22 @@ namespace Logic
         {
             List<Unit> children = new List<Unit>();
 
-            foreach (var child in units)
+            //foreach (var child in units)
+            //{
+            //    if (child.ParentUnitId == unit.Id)
+            //    {
+            //        IsNotRecursion(unit, child);
+            //        IsNotRecursion(mainUnit, child);
+
+            //        children.Add(child);
+            //        children.AddRange(FindChildren(mainUnit, child, units));
+            //    }
+            //}
+
+            units.OrderBy(u => u.ParentUnitId);
+            List<Unit> uuu = BinarySearchByParentId(units.ToArray(), unit.Id);
+
+            foreach (var child in uuu)
             {
                 if (child.ParentUnitId == unit.Id)
                 {
@@ -72,11 +87,61 @@ namespace Logic
             {
                 return;
             }
-            
+
+            units.OrderBy(u => u.Id);
+
             if (BinarySearchById(units.ToArray(), unit) == -1)
             {
                 throw new Exception($"Parent does not exists in unit {unit.Name}.");
             }
+        }
+
+        private static List<Unit> BinarySearchByParentId(Unit[] array, int parentId)
+        {
+            List<Unit> result = new List<Unit>();
+            int left = 0;
+            int right = array.Length - 1;
+            int middle = 0;
+
+            while (left < right)
+            {
+                middle = (left + right) / 2;
+
+                if (parentId < array[middle].ParentUnitId)
+                {
+                    right = middle;
+                }
+                else if (parentId > array[middle].ParentUnitId)
+                {
+                    left = middle + 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (array[right].ParentUnitId == parentId)
+            {
+                middle = right;
+            }
+            else if (array[middle].ParentUnitId != parentId)
+            {
+                return result;
+            }
+
+            while(array[middle].ParentUnitId == parentId && middle < array.Length - 1)
+            {
+                result.Add(array[middle]);
+                middle++;
+            }
+            while (array[middle].ParentUnitId == parentId && middle > 0)
+            {
+                result.Add(array[middle]);
+                middle--;
+            }
+
+            return result;
         }
 
         private static int BinarySearchById(Unit[] array, Unit element)
