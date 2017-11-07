@@ -14,7 +14,7 @@ namespace ConsoleApp
             Unit u4 = new Unit(4, "u4", 2);
             Unit u5 = new Unit(5, "u5", 2);
             Unit u6 = new Unit(6, "u6", 4);
-            Unit u7 = new Unit(7, "u7", 6);
+            Unit u7 = new Unit(7, "u7", 6); 
 
             Dictionary<int, List<Unit>> result = UnitService.ToDictionnary(new List<Unit> { u1, u2, u3, u4, u5, u6, u7 });
             foreach (var r in result)
